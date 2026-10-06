@@ -44,7 +44,7 @@ log="$(bend PROOF.bend --verdict 2>&1)"
 grep -q 'ALL PROOFS CHECK' <<<"$log" && pass 'bend PROOF.bend --verdict' || fail 'bend PROOF.bend --verdict' "$log"
 
 echo '== check every file'
-for f in main.bend src/*.bend examples/*.bend; do check_file "$f"; done
+for f in main.bend cli.bend src/*.bend examples/*.bend; do check_file "$f"; done
 
 echo '== checker-evaluated tests'
 for f in tests/*_test.bend; do
@@ -56,6 +56,9 @@ for f in tests/*_run.bend; do
   head -5 "$f" | grep -qi 'C lane only' || run_js "$f"
   run_c "$f"
 done
+
+echo '== CLI tests (local only)'
+log="$(bash tests/cli_test.sh 2>&1)" && pass 'tests/cli_test.sh' || fail 'tests/cli_test.sh' "$log"
 
 echo '== live tests'
 for s in tests/*_live.sh; do

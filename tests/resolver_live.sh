@@ -120,7 +120,7 @@ for lane in ${lanes[@]}; do
   expect "address literal" dig 0 '^192\.0\.2\.9$' -- @$L --port $CLOSED 192.0.2.9
   expect "bad name" dig 1 'bad name: empty label' -- @$L --port $OK a..b
   expect "unknown type" dig 1 'unknown type: BOGUS' -- @$L --port $OK x.test. BOGUS
-  expect "usage" dig 1 'usage: dig' --
+  expect "usage" dig 1 'usage: bender-dns' --
 
   echo "== [$lane] real resolvers over TCP"
   if [ $stub = 1 ]; then

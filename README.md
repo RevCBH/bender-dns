@@ -31,14 +31,45 @@ def main() -> IO(Unit):
     ...   # D.Dns.lookup_ipv4(cfg, "example.com"), D.Dns.resolve(cfg, "gmail.com", D.Dns.MX())
 ```
 
-Examples, from this directory:
+## Command line
+
+Build the standalone CLI with Bend 2.0.32 and clang:
 
 ```bash
+make
+./bender-dns example.com                  # A records by default
+./bender-dns example.com AAAA
+./bender-dns @1.1.1.1 gmail.com MX
+./bender-dns --server 8.8.8.8 --timeout 2000 --attempts 1 example.com TXT
+./bender-dns --os localhost               # platform resolver, IPv4 and IPv6
+./bender-dns --help
+```
+
+The command prints one answer per line, plus the canonical owner when a CNAME
+or search suffix changes the name. It uses `/etc/resolv.conf` and `/etc/hosts`
+by default. `--server` (or `-s` / `@IPv4`) is repeatable; `--port` (or `-p`)
+selects a port. Types are case-insensitive, including `TYPEnnn` for numeric
+record types. `+tcp-port`, `+timeout`, and `+attempts` aliases are also accepted.
+Timeouts are in **milliseconds**. `--os` supports A and AAAA only and cannot be
+combined with native resolver options. Success exits with 0; invalid arguments
+or a failed lookup exit with 1 and a message on stderr.
+
+To install under your own account, run `make install PREFIX="$HOME/.local"`
+(ensure `~/.local/bin` is on your PATH). No Bend runtime is needed to run the
+compiled binary. `make test` runs local CLI integration tests on both runtimes
+with Python 3 and Bend; no internet access is needed.
+
+You can also run the CLI directly from source, or use the example entry points:
+
+```bash
+bend cli.bend -- example.com AAAA
 bend examples/dig.bend -- example.com AAAA
 bend examples/dig.bend -- @8.8.8.8 gmail.com MX
 bend examples/dig.bend -- --os example.com      # through getaddrinfo
 bend examples/host.bend -- www.github.com
 ```
+
+## API
 
 The API, in groups (all `Dns.*`):
 
@@ -88,7 +119,8 @@ The gate:
   reported but needs no fallback.
 - **Timeouts** cannot cancel a stalled connect or read (Base has no cancellation):
   the resolver moves on at once, but the stalled step keeps the program alive
-  until the peer acts; the examples exit explicitly.
+  until the peer acts; the CLI and examples exit explicitly. A successful
+  query writes one blank line to stderr because of Base's `IO.die` behavior.
 - **JS lane**: `os_lookup` blocks the event loop; the JS lane is several times
   slower than the native one.
 - Built and tested on Linux x86_64 with Bend 2.0.32. The C side of the foreign
